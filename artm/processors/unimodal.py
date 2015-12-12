@@ -6,55 +6,47 @@ from .base import ProcessorBase
 
 
 class UnimodalProcessor(ProcessorBase):
-    def __init__(self, topics, words):
-        self.topics = topics
+
+    def __init__(self, topic_count, word_count):
+        self.topic_count = topic_count
         self.phi = np.matrix(
-            np.random.random((words, topics)),
+            np.random.random((word_count, topic_count)),
             dtype='float64',
         )
 
-        self.processed = 0
+        self.normalize(self.phi)
 
-    def process(self, batch_stream, inner_iterations, outer_iterations):
-        log = open('log', 'wr')
-        for _ in xrange(outer_iterations):
-            for batch_id, batch in enumerate(batch_stream):
-                self.processed += 1
-                log.write(str(batch_id) + '\n')
+    def process(self, batch_stream, inner_iterations):
+        for batch_id, batch in enumerate(batch_stream.as_unimodal):
+            counters = batch.counters
+            token_ids = batch.token_ids
 
-                counters = batch.counters
-                token_ids = np.asarray(
-                    counters[:, 0], dtype='uint32'
-                ).reshape(-1)
+            phi = self.slice_phi(token_ids)
 
-                phi = self.slice_phi(token_ids)
-                self.normalize(phi, axis=0)
+            theta = np.matrix(
+                np.random.random((self.topic_count, batch.documents_count)),
+                dtype='float64',
+            )
 
-                theta = np.matrix(
-                    np.random.random((self.topics, len(batch.documents))),
-                    dtype='float64',
-                )
+            self.normalize(theta)
 
-                self.normalize(theta, axis=0)
+            for inner_iteration in xrange(inner_iterations):
+                product = counters / self.fill_missing(phi * theta, 1)
+                new_phi = np.multiply(phi, product * theta.T)
+                new_theta = np.multiply(theta, phi.T * product)
 
-                for _ in xrange(inner_iterations):
-                    product = counters / self.fill_missing(phi * theta, 1)
-                    new_phi = np.multiply(phi, product * theta.T)
-                    new_theta = np.multiply(theta, phi.T * product)
+                phi = self.normalize(new_phi)
+                theta = self.normalize(new_theta)
 
-                    self.normalize(new_phi, axis=0)
-                    self.normalize(new_theta, axis=0)
-
-                    phi = new_phi
-                    theta = new_theta
-
-                self.update_phi(phi, token_ids)
+            self.update_phi(phi, token_ids)
 
     def slice_phi(self, token_ids):
-        return self.phi.take(token_ids, axis=0)
+        slice = self.phi.take(token_ids, axis=0)
+        return self.normalize(slice)
 
     def update_phi(self, update, token_ids):
         self.phi[token_ids, ] = update
+        self.normalize(self.phi)
 
     @staticmethod
     def fill_missing(matrix, value):
@@ -62,11 +54,13 @@ class UnimodalProcessor(ProcessorBase):
         return matrix
 
     @staticmethod
-    def normalize(matrix, axis):
+    def normalize(matrix):
         np.divide(
             matrix,
             UnimodalProcessor.fill_missing(
-                matrix.sum(axis=axis), 1
+                matrix.sum(axis=0), 1
             ),
             matrix
         )
+
+        return matrix

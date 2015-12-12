@@ -1,64 +1,50 @@
 from __future__ import absolute_import, print_function, division
 
 import abc
-import collections
-import itertools
-import operator
 
-import more_itertools
+from itertools import imap
+from more_itertools import chunked
 
-from ..utils import Batch, Vocabulary
+from ..document import document_converters
+from ..batch import batch_converters
+from ..utils import MutableVocabulary
 
 
 class CorpusBase(object):
 
     __metaclass__ = abc.ABCMeta
 
-    attributes = {
-        'unimodal': 'as_unimodal',
-        'multimodal': 'as_multimodal',
-        'hypergraph': 'as_hypergraph',
-    }
-
-    def __init__(self, input_stream, vocabulary=None, mutate_vocabulary=False):
+    def __init__(self, input_stream, mode, vocabulary=None):
         self.input_stream = input_stream
-        self.vocabulary = vocabulary or Vocabulary()
-        self.mutate_vocabulary = mutate_vocabulary
+        self.mode = mode
+        self.vocabulary = vocabulary or MutableVocabulary()
+        self.cached_document_stream = None
 
     @abc.abstractmethod
     def parse_input_stream(self):
         pass
 
-    def document_stream(self, mode='unimodal'):
-        document_stream = self.parse_input_stream()
-        attribute_name = self.attributes[mode]
-        return itertools.imap(
-            operator.attrgetter(attribute_name),
-            document_stream
-        )
-
-    def batch_stream(self, batch_size, mode='unimodal'):
-        return itertools.imap(
-            Batch,
-            more_itertools.chunked(self.document_stream(mode), batch_size)
-        )
-
-    def add_token(self, token):
-        vocabulary = self.vocabulary
-        if not self.mutate_vocabulary and not vocabulary.has_token(token):
-            return None
-
-        if not vocabulary.has_token(token):
-            vocabulary.add_token(token)
-
-        return vocabulary.token_id(token)
-
     @property
-    def inversed_index(self):
-        inversed_index = collections.defaultdict(list)
+    def document_stream(self):
+        document_stream = self.cached_document_stream
+        if self.cached_document_stream is None:
+            document_converter = document_converters[self.mode]
+            document_stream = imap(
+                document_converter, self.parse_input_stream()
+            )
 
-        for document in self.document_stream:
-            for token_id in document.token_ids:
-                inversed_index[token_id].append(document.id)
+        return document_stream
 
-        return inversed_index
+    def cache(self):
+        if self.cached_document_stream is None:
+            self.cached_document_stream = list(self.document_stream)
+
+    def clear_cache(self):
+        self.cached_document_stream = None
+
+    def batch_stream(self, batch_size):
+        batch_converter = batch_converters[self.mode]
+        return imap(
+            batch_converter,
+            chunked(self.document_stream, batch_size),
+        )
