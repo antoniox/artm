@@ -6,6 +6,7 @@
 #include <unordered_map>
 
 #include "modality.h"
+#include "typedefs.h"
 
 
 class Vocabulary {
@@ -13,11 +14,12 @@ public:
     void load(std::istream & input);
     void save(std::ostream & output) const;
 
-    size_t get_id(const Modality & modality, const std::string & token);
+    id_type get_id(const Modality & modality, const std::string & token);
+    size_type modality_size(const Modality & modality) const;
 
 private:
     std::array<
-        std::unordered_map<std::string, size_t>,
+        std::unordered_map<std::string, id_type>,
         MODALITY_COUNT
     > mapping_;
 

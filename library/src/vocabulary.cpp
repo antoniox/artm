@@ -48,11 +48,16 @@ void Vocabulary::save(std::ostream & output) const {
 }
 
 
-size_t Vocabulary::get_id(const Modality & modality, const std::string & token) {
+id_type Vocabulary::get_id(const Modality & modality, const std::string & token) {
     auto & inner_mapping = mapping_[modality];
 
     size_t new_id = inner_mapping.size();
     auto pair = inner_mapping.emplace(token, new_id);
 
     return pair.first->second; 
+}
+
+
+size_type Vocabulary::modality_size(const Modality & modality) const {
+    return mapping_[modality].size();
 }

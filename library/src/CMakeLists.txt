@@ -8,5 +8,6 @@ add_library(artm STATIC
 
 target_link_libraries(artm
     ${PCRECPP_LIBRARIES}
+    ${GLOG_LIBRARIES}
     ${Boost_LIBRARIES}
 )

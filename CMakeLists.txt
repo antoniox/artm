@@ -6,7 +6,6 @@ project (artm CXX)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 message(STATUS "Build type is ${CMAKE_BUILD_TYPE}")
-message(STATUS "CMAKE_CXX_FLAGS are ${CMAKE_CXX_FLAGS}")
 
 find_package(Boost
     COMPONENTS 
@@ -15,6 +14,7 @@ find_package(Boost
 )
 
 find_package(PCRECPP)
+find_package(GLOG)
 
 add_subdirectory(library)
 add_subdirectory(tools)

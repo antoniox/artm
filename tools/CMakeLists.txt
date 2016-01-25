@@ -5,6 +5,7 @@ include_directories(
 link_libraries(
     artm
     ${Boost_LIBRARIES}
+    ${GLOG_LIBRARIES}
 )
 
 add_executable(parse_corpus parse_corpus.cpp)

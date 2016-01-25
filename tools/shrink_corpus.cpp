@@ -71,6 +71,9 @@ void add_threshold_options(
 
 void set_options(po::options_description & description) {
     description.add_options()
+        ("config",
+            po::value<std::string>()->default_value("shrink_corpus.cfg"),
+            "config filename")
         ("input-vocabulary", po::value<std::string>(), "input vocabulary filename")
         ("output-vocabulary", po::value<std::string>(), "output vocabulary filename")
         ("input-corpus", po::value<std::string>(), "input corpus filename")
@@ -101,6 +104,8 @@ Thresholds parse_thresholds(const po::variables_map & options) {
 
 
 void fill_frequencies(std::istream & input, Frequencies & frequencies) {
+    LOG_INFO << "Filling token frequencies..." << std::endl;
+
     DocumentRecord record;
 
     // skip header
@@ -117,7 +122,15 @@ void fill_frequencies(std::istream & input, Frequencies & frequencies) {
         frequencies[WORD][word_id].insert(document_id);
         frequencies[NICK][nick_id].insert(document_id);
         frequencies[DATE][date_id].insert(document_id);
+
+        LOG_INFO_EVERY_N(100000, "rows");
     }
+
+    LOG_INFO << "Done filling token frequencies" << std::endl;
+    LOG_INFO << "Token statistics: \n" <<
+        "\twords: " << frequencies[WORD].size() << std::endl <<
+        "\tnicks: " << frequencies[NICK].size() << std::endl <<
+        "\tdates: " << frequencies[DATE].size() << std::endl;
 }
 
 
@@ -126,11 +139,15 @@ void fill_remapping_vocabulary(
     const Thresholds & thresholds,
     RemappingVocabulary & remapping_vocabulary
 ) {
+    LOG_INFO << "Filling remapping vocabulary..." << std::endl;
+
     std::array<id_type, MODALITY_COUNT> candidate_ids({0, 0, 0});
 
     Modality modality = static_cast<Modality>(0);
 
     for (auto & token_frequencies : frequencies) {
+        LOG_INFO << "Processing tokens for modality: " << modality << std::endl;
+
         auto & threshold = thresholds[modality];
         auto & modality_remapping = remapping_vocabulary[modality];
 
@@ -147,17 +164,18 @@ void fill_remapping_vocabulary(
                 modality_remapping[token] = candidate_ids[modality];
                 candidate_ids[modality] += 1;
             }
+
+            LOG_INFO_EVERY_N(10000, "tokens");
         }
 
         modality = static_cast<Modality>(modality + 1);
     }
 
-    // XXX: log progress properly
-    std::cerr <<
-        "words\tnicks\tdates" << std::endl <<
-        remapping_vocabulary[WORD].size() << '\t' <<
-        remapping_vocabulary[NICK].size() << '\t' <<
-        remapping_vocabulary[DATE].size() << std::endl;
+    LOG_INFO << "Done filling remapping vocabulary" << std::endl;
+    LOG_INFO << "Token statistics: \n" << 
+        "\twords: " << remapping_vocabulary[WORD].size() << std::endl <<
+        "\tnicks: " << remapping_vocabulary[NICK].size() << std::endl <<
+        "\tdates: " << remapping_vocabulary[DATE].size() << std::endl;
 }
 
 
@@ -166,6 +184,8 @@ void remap_vocabulary(
     std::istream & input,
     std::ostream & output
 ) {
+    LOG_INFO << "Remapping vocabulary..." << std::endl;
+
     VocabularyRecord record;
 
     // skip header
@@ -186,7 +206,11 @@ void remap_vocabulary(
             record.token_id = iterator->second;
             record.save(output);
         }
+
+        LOG_INFO_EVERY_N(10000, "rows");
     }
+
+    LOG_INFO << "Done remapping vocabulary" << std::endl;
 }
 
 
@@ -195,6 +219,8 @@ void remap_corpus(
     std::istream & input,
     std::ostream & output
 ) {
+    LOG_INFO << "Remapping corpus..." << std::endl;
+
     DocumentRecord record;
 
     // skip header
@@ -229,12 +255,21 @@ void remap_corpus(
 
             record.save(output);
         }
+
+        LOG_INFO_EVERY_N(100000, "rows");
     }
+
+    LOG_INFO << "Done remapping corpus" << std::endl;
 }
 
 
 int main(int argc, const char ** argv) {
+    init_logging(argv[0]);
+    LOG_INFO << "Running " << argv[0] << "..." <<  std::endl;
+
     auto options = parse_options(&set_options, argc, argv);
+    LOG_INFO << options;
+
     auto thresholds = parse_thresholds(options);
 
     std::ifstream input_vocabulary_stream(options["input-vocabulary"].as<std::string>());
@@ -263,6 +298,8 @@ int main(int argc, const char ** argv) {
     remap_corpus(
         remapping_vocabulary, input_corpus_stream, output_corpus_stream
     );
+
+    LOG_INFO << "Done " << argv[0] << std::endl;
 
     return 0;
 }
