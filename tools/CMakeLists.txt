@@ -10,3 +10,4 @@ link_libraries(
 
 add_executable(parse_corpus parse_corpus.cpp)
 add_executable(shrink_corpus shrink_corpus.cpp)
+add_executable(process process.cpp)
