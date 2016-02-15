@@ -6,24 +6,26 @@
 
 #include <glog/logging.h>
 
+#include "types.h"
+
 namespace po = boost::program_options;
 
 void skip_line(std::istream & input);
-
 
 po::variables_map parse_options(
     void (*set_options)(po::options_description &),
     int argc, const char ** argv
 );
 
-
 std::ostream & operator << (
     std::ostream & output, 
     const po::variables_map & options
 );
 
-
 void init_logging(const char * program_name);
+float_type uniform_random();
+float_type zero();
+
 
 #define CUSTOM_LOG(severity) google::LogMessage( \
     __FILE__, __LINE__, google::GLOG_ ## severity).stream()
@@ -49,3 +51,11 @@ void init_logging(const char * program_name);
 #define LOG_INFO_EVERY_N(counter, message) \
     CUSTOM_LOG_EVERY_N(INFO, counter) << "Processed " << \
     google::COUNTER << " " << message << std::endl
+
+
+#define FOR(type, name, limit) \
+    for (type name = 0; name < limit; ++name)
+
+#define PARALLEL_FOR(type, name, limit) \
+    _Pragma("omp parallel for") \
+    FOR(type, name, limit)

@@ -2,7 +2,8 @@
 
 #include <fstream>
 
-#include "typedefs.h"
+#include "constants.h"
+#include "types.h"
 
 
 struct DocumentRecord {

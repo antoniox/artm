@@ -1,27 +1,11 @@
 #include "document.h"
-#include "modality.h"
-#include "typedefs.h"
 #include "utils.h"
-
-
-
-Token::Token(const Modality & modality, id_type id)
-    : modality(modality), id(id) {
-}
-
-
-Edge::Edge(std::vector<Token> && tokens, const Type & type, id_type id)
-    : tokens(std::move(tokens)), type(type), id(id) {
-}
-
-
-EdgeEntry::EdgeEntry(Edge && edge, size_type entries)
-    : edge(std::move(edge)), entries(entries) {
-}
 
 
 DocumentParser::DocumentParser(std::istream & input)
     : input_(input), has_more_(false) {
+
+    skip_line(input_);
 
     if (input_) {
         cached_document_record_.load(input_);
@@ -36,10 +20,12 @@ bool DocumentParser::has_more() const {
 
 
 void DocumentParser::parse(Document & document) {
+    document.edge_entries.clear();
+
     id_type edge_id = 0;
 
     id_type first_document_id = cached_document_record_.document_id;
-    id_type document_id = cached_document_record_.document_id;
+    id_type document_id = first_document_id;
 
     while (document_id == first_document_id) {
         id_type word_id = cached_document_record_.word_id;

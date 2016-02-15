@@ -4,16 +4,10 @@
 #include <unordered_set>
 #include <unordered_map>
 
-#include <boost/program_options.hpp>
-
 #include "document_record.h"
-#include "modality.h"
-#include "typedefs.h"
+#include "types.h"
 #include "utils.h"
 #include "vocabulary_record.h"
-
-
-namespace po = boost::program_options;
 
 
 typedef
@@ -143,32 +137,32 @@ void fill_remapping_vocabulary(
 
     std::array<id_type, MODALITY_COUNT> candidate_ids({0, 0, 0});
 
-    Modality modality = static_cast<Modality>(0);
+    FOR(id_type, modality_id, MODALITY_COUNT) {
+        Modality modality = static_cast<Modality>(modality_id);
 
-    for (auto & token_frequencies : frequencies) {
-        LOG_INFO << "Processing tokens for modality: " << modality << std::endl;
+        for (auto & token_frequencies : frequencies) {
+            LOG_INFO << "Processing tokens for modality: " << modality << std::endl;
 
-        auto & threshold = thresholds[modality];
-        auto & modality_remapping = remapping_vocabulary[modality];
+            auto & threshold = thresholds[modality];
+            auto & modality_remapping = remapping_vocabulary[modality];
 
-        for (auto & token_documents : token_frequencies) {
-            auto & token = token_documents.first;
-            auto & documents = token_documents.second;
+            for (auto & token_documents : token_frequencies) {
+                auto & token = token_documents.first;
+                auto & documents = token_documents.second;
 
-            auto documents_count = documents.size();
+                auto documents_count = documents.size();
 
-            if (
-                threshold.minimum <= documents_count &&
-                documents_count <= threshold.maximum
-            ) {
-                modality_remapping[token] = candidate_ids[modality];
-                candidate_ids[modality] += 1;
+                if (
+                    threshold.minimum <= documents_count &&
+                    documents_count <= threshold.maximum
+                ) {
+                    modality_remapping[token] = candidate_ids[modality];
+                    candidate_ids[modality] += 1;
+                }
+
+                LOG_INFO_EVERY_N(10000, "tokens");
             }
-
-            LOG_INFO_EVERY_N(10000, "tokens");
         }
-
-        modality = static_cast<Modality>(modality + 1);
     }
 
     LOG_INFO << "Done filling remapping vocabulary" << std::endl;

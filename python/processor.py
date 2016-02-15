@@ -34,16 +34,19 @@ def get_multitokens(stream):
             (  # Multitoken
                 0,  # type
                 ('word', int(record['word_id'])),
-                ('nick', int(record['nick_id'])),
+                # ('nick', int(record['nick_id'])),
             ),
             record['entries'],  # entries
         )
 
 
 def get_batches(records, batch_size):
-    documents = itertools.groupby(
-        records,
-        key=operator.itemgetter(0),
+    documents = (
+        (key, list(group))
+        for (key, group) in itertools.groupby(
+            records,
+            key=operator.itemgetter(0),
+        )
     )
 
     chunked = more_itertools.chunked(documents, batch_size)
@@ -60,10 +63,12 @@ def get_batches(records, batch_size):
         for _, multitokens in chunk:
             for _, multitoken, _ in multitokens:
                 type = multitoken[0]
-                index = multitokens_counts[type]
 
-                multitokens_counts[type] += 1
-                multitokens_indices[type][multitoken] = index
+                if multitoken not in multitokens_indices[type]:
+                    multitoken_index = multitokens_counts[type]
+
+                    multitokens_indices[type][multitoken] = multitoken_index
+                    multitokens_counts[type] += 1
 
                 for token in multitoken[1:]:
                     modality, full_index = token
@@ -148,8 +153,6 @@ def slice_phi(phi, tokens_indices):
 
             sliced_phi[type][modality] = np.vstack(rows)
 
-    normalize_phi(sliced_phi)
-
     return sliced_phi
 
 
@@ -206,9 +209,15 @@ def get_phi_from_multi_phi(
                 target_row = phi_element[modality][sliced_index, ]
 
                 np.add(target_row, row, target_row)
-
-    normalize_phi(zeros)
-
+    #
+    # for type, modalities in zeros.iteritems():
+    #     for modality, matrix in modalities.iteritems():
+    #         for index in xrange(matrix.shape[0]):
+    #             row = matrix[index, ]
+    #             
+    #             if row[row == 0].shape == row.shape:
+    #                 raise Exception(type, modality, index)
+    #
     return zeros
 
 
@@ -283,10 +292,12 @@ def main():
 
         documents_count, counters, multitokens_indices, tokens_indices = batch
 
-        sliced_phi = slice_phi(phi, tokens_indices)
-
         theta = np.matrix(np.random.random((topics_count, documents_count)))
         normalize_matrix(theta)
+        #
+        # dump_phi(prefix, sliced_phi, topics_count, batch_index)
+
+        sliced_phi = slice_phi(phi, tokens_indices)
 
         multi_phi = get_multi_phi(
             sliced_phi, multitokens_indices, tokens_indices, topics_count
@@ -304,8 +315,8 @@ def main():
                 new_multi_phi[type] = np.multiply(
                     multi_phi[type], products[type] * theta.T
                 )
-
-                normalize_matrix(new_multi_phi[type])
+                #
+                # normalize_matrix(new_multi_phi[type])
 
             multiplier = None
             for type in products:

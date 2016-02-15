@@ -1,11 +1,12 @@
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
+#include <random>
 #include <string>
 
 #include <unistd.h>
 
-#include "typedefs.h"
+#include "types.h"
 #include "utils.h"
 
 
@@ -82,4 +83,18 @@ void init_logging(const char * program_name) {
     dup2(STDOUT_FILENO, STDERR_FILENO);
     FLAGS_logtostderr = 1;
     google::InitGoogleLogging(program_name);
+}
+
+
+float_type uniform_random() {
+    static std::random_device random_device;
+    static std::mt19937 random_generator(random_device());
+    static std::uniform_real_distribution<float_type> distribution(0, 1);
+
+    return distribution(random_generator);
+}
+
+
+float_type zero() {
+    return 0;
 }

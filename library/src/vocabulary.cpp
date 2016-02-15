@@ -1,8 +1,8 @@
 #include <unordered_map>
 
+#include "utils.h"
 #include "vocabulary.h"
 #include "vocabulary_record.h"
-#include "utils.h"
 
 
 void Vocabulary::load(std::istream & input) {
@@ -13,7 +13,7 @@ void Vocabulary::load(std::istream & input) {
 
     while (input) {
         record.load(input);
-        mapping_[record.modality][record.token] = record.token_id;
+        token_id_map_[record.modality][record.token] = record.token_id;
     }
 }
 
@@ -22,42 +22,57 @@ void Vocabulary::save(std::ostream & output) const {
     VocabularyRecord record;
     record.save_header(output);
 
-    Modality modality = static_cast<Modality>(0);
+    FOR(id_type, modality_id, MODALITY_COUNT) {
+        Modality modality = static_cast<Modality>(modality_id);
+        auto & modality_slice = token_id_map_[modality];
 
-    for (auto & inner_mapping : mapping_) {
         record.modality = modality;
 
         for (
-            auto inner_iterator = inner_mapping.begin();
-            inner_iterator != inner_mapping.end();
-            ++inner_iterator
+            auto iterator = modality_slice.begin();
+            iterator != modality_slice.end();
+            ++iterator
         ) {
-
-            auto & token = inner_iterator->first;
-            auto & token_id = inner_iterator->second;
+            auto & token = iterator->first;
+            auto & token_id = iterator->second;
 
             record.token = token;
             record.token_id = token_id;
 
             record.save(output);
         }
-
-        // XXX: set next function
-        modality = static_cast<Modality>(modality + 1);
     }
 }
 
 
-id_type Vocabulary::get_id(const Modality & modality, const std::string & token) {
-    auto & inner_mapping = mapping_[modality];
+id_type Vocabulary::token_id(const Modality & modality, const std::string & token) {
+    auto & modality_slice = token_id_map_[modality];
 
-    size_t new_id = inner_mapping.size();
-    auto pair = inner_mapping.emplace(token, new_id);
+    size_t new_id = modality_slice.size();
+    auto pair = modality_slice.emplace(token, new_id);
+
+    if (pair.second) {
+        id_token_map_[modality][new_id] = token;
+    }
 
     return pair.first->second; 
 }
 
 
+id_type Vocabulary::token_id(const Modality & modality, const std::string & token) const {
+    auto & modality_slice = token_id_map_[modality];
+    auto iterator = modality_slice.find(token);
+    return iterator->second;
+}
+
+
+const std::string & Vocabulary::token(const Modality & modality, id_type token_id) const {
+    auto & modality_slice = id_token_map_[modality];
+    auto iterator = modality_slice.find(token_id);
+    return iterator->second;
+}
+
+
 size_type Vocabulary::modality_size(const Modality & modality) const {
-    return mapping_[modality].size();
+    return token_id_map_[modality].size();
 }

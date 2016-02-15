@@ -4,38 +4,7 @@
 #include <vector>
 
 #include "document_record.h"
-#include "modality.h"
-#include "typedefs.h"
-
-
-enum Type {
-    FIRST, TYPE_COUNT
-};
-
-
-struct Token {
-    Modality modality;
-    id_type id;
-
-    Token(const Modality & modality, id_type id);
-};
-
-
-struct Edge {
-    std::vector<Token> tokens;
-    Type type;
-    id_type id;
-
-    Edge(std::vector<Token> && tokens, const Type & type, id_type id);
-};
-
-
-struct EdgeEntry {
-    Edge edge;
-    size_type entries;
-
-    EdgeEntry(Edge && edge, size_type entries);
-};
+#include "types.h"
 
 
 struct Document {

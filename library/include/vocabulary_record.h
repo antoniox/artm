@@ -3,7 +3,8 @@
 #include <fstream>
 #include <string>
 
-#include "modality.h"
+#include "constants.h"
+#include "types.h"
 
 
 struct VocabularyRecord {

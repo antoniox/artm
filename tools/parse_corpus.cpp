@@ -1,14 +1,9 @@
 #include <fstream>
 
-#include <boost/program_options.hpp>
-
 #include "document_record.h"
 #include "vocabulary.h"
 #include "raw_record.h"
 #include "utils.h"
-
-
-namespace po = boost::program_options;
 
 
 void set_options(po::options_description & description) {
