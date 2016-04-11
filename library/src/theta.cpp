@@ -46,3 +46,18 @@ void Theta::fill(float_type (*initializer)()) {
         }
     }
 }
+
+
+std::vector<float_type> & Theta::operator [] (id_type document_id) {
+    return matrix[document_id];
+}
+
+
+const std::vector<float_type> & Theta::operator [] (id_type document_id) const {
+    return matrix[document_id];
+}
+
+
+void Theta::swap(Theta & other) {
+    matrix.swap(other.matrix);
+}

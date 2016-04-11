@@ -48,11 +48,6 @@ int main(int argc, const char ** argv) {
     size_type doc_id = 0;
 
     while (parser.has_more()) {
-        // if (doc_id >= 1) {
-        //     break;
-        // }
-        //
-        // doc_id += 1;
         parser.parse(chunk);
         processor.process(chunk);
 

@@ -3,7 +3,9 @@
 #include <fstream>
 
 #include "batch.h"
+#include "expectation.h"
 #include "phi.h"
+#include "theta.h"
 #include "types.h"
 #include "vocabulary.h"
 
@@ -25,4 +27,22 @@ private:
 
     Phi phi_;
     Phi phi_counters_;
+
+    void calculate_expectation(
+        const std::vector<Document> & documents,
+        const Theta & theta,
+        Expectation & expectation
+    ) const;
+
+    void maximize_theta(
+        const std::vector<Document> & documents,
+        const Expectation & expectation,
+        Theta & theta,
+        Theta & theta_counters
+    ) const;
+
+    void maximize_phi(
+        const std::vector<Document> & documents,
+        const Expectation & expectation
+    );
 };

@@ -111,3 +111,18 @@ void Phi::save(std::ostream & output) const {
         }
     }
 }
+
+
+Phi::PhiTypeSlice & Phi::operator [] (const Type & type) {
+    return matrix[type];
+}
+
+
+const Phi::PhiTypeSlice & Phi::operator [] (const Type & type) const {
+    return matrix[type];
+}
+
+
+void Phi::swap(Phi & other) {
+    matrix.swap(other.matrix);
+}

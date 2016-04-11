@@ -24,4 +24,8 @@ struct Expectation {
 
     void normalize();
     void fill(float_type (*initializer)());
+
+    // utility methods
+    EdgeMapping & operator [] (id_type document_id);
+    const EdgeMapping & operator [] (id_type document_id) const;
 };

@@ -59,3 +59,10 @@ float_type zero();
 #define PARALLEL_FOR(type, name, limit) \
     _Pragma("omp parallel for") \
     FOR(type, name, limit)
+
+
+template <typename M, typename T>
+const typename M::mapped_type & safe_get(const M & m, const T & t) {
+    auto iterator = m.find(t);
+    return iterator->second;
+}

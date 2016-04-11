@@ -64,3 +64,13 @@ void Expectation::fill(float_type (*initializer)()) {
         }
     }
 }
+
+
+Expectation::EdgeMapping & Expectation::operator [] (id_type document_id) {
+    return matrix[document_id];
+}
+
+
+const Expectation::EdgeMapping & Expectation::operator [] (id_type document_id) const {
+    return matrix[document_id];
+}

@@ -9,16 +9,15 @@
 
 
 struct Phi {
+    typedef std::vector<
+                std::array<
+                    std::vector<float_type>,
+                    MODALITY_COUNT
+                >
+            > PhiTypeSlice;
+
     // type -> topic -> modality -> token -> probability
-    std::array<
-        std::vector<
-            std::array<
-                std::vector<float_type>,
-                MODALITY_COUNT
-            >
-        >,
-        TYPE_COUNT
-    > matrix;
+    std::array<PhiTypeSlice, TYPE_COUNT> matrix;
 
     Phi(
         size_type topics_count, 
@@ -29,4 +28,9 @@ struct Phi {
     void normalize();
     void fill(float_type (*initializer)());
     void save(std::ostream & output) const;
+
+    // utility methods
+    PhiTypeSlice & operator [] (const Type & type);
+    const PhiTypeSlice & operator [] (const Type &  type) const;
+    void swap(Phi & other);
 };
