@@ -6,13 +6,9 @@
 
 
 void Vocabulary::load(std::istream & input) {
-    // skip header
-    skip_line(input);
-
     VocabularyRecord record;
 
-    while (input) {
-        record.load(input);
+    while (record.load(input)) {
         token_id_map_[record.modality][record.token] = record.token_id;
     }
 }
@@ -20,7 +16,6 @@ void Vocabulary::load(std::istream & input) {
 
 void Vocabulary::save(std::ostream & output) const {
     VocabularyRecord record;
-    record.save_header(output);
 
     FOR(id_type, modality_id, MODALITY_COUNT) {
         Modality modality = static_cast<Modality>(modality_id);

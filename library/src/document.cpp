@@ -5,10 +5,7 @@
 DocumentParser::DocumentParser(std::istream & input)
     : input_(input), has_more_(false) {
 
-    skip_line(input_);
-
-    if (input_) {
-        cached_document_record_.load(input_);
+    if (cached_document_record_.load(input_)) {
         has_more_ = true;
     }
 }
@@ -50,8 +47,7 @@ void DocumentParser::parse(Document & document) {
 
         ++edge_id;
 
-        if (input_) {
-            cached_document_record_.load(input_);
+        if (cached_document_record_.load(input_)) {
             document_id = cached_document_record_.document_id;
         } else {
             has_more_ = false;

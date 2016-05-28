@@ -2,7 +2,6 @@
 
 #include <fstream>
 
-#include "constants.h"
 #include "types.h"
 
 
@@ -13,8 +12,6 @@ struct DocumentRecord {
     id_type date_id;
     size_type entries;
 
-    void load(std::istream & input);
+    std::istream & load(std::istream & input);
     void save(std::ostream & output) const;
-
-    static void save_header(std::ostream & output);
 };

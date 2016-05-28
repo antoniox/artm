@@ -23,7 +23,7 @@ struct RawRecord {
     std::string date;
     std::string time;
 
-    void load(std::istream & input);
+    std::istream & load(std::istream & input);
     DocumentRecordTokenizer tokenize(Vocabulary & vocabulary);
 
     void make_document_id();

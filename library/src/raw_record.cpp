@@ -1,6 +1,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
@@ -10,13 +11,14 @@
 #include "raw_record.h"
 
 
-void RawRecord::load(std::istream & input) {
+std::istream & RawRecord::load(std::istream & input) {
     static std::string buffer;
     static boost::escaped_list_separator<char> splitter('\\', ';', '\"');
 
     std::getline(input, buffer);
+
     if (! input) {
-        return;
+        return input;
     }
 
     boost::algorithm::trim_right(buffer);
@@ -34,6 +36,8 @@ void RawRecord::load(std::istream & input) {
     time = *ptr;
 
     make_document_id();
+
+    return input;
 }
 
 
@@ -91,8 +95,8 @@ void DocumentRecordTokenizer::_fill_word_entries() {
 
 
 bool is_good_word(const std::string & word) {
+    // XXX: input file MUST be in UTF-8
     static pcrecpp::RE good_word("[а-я]{3,}", pcrecpp::UTF8());
-
     return good_word.FullMatch(word);
 }
 
@@ -109,6 +113,10 @@ DocumentRecordIterator::DocumentRecordIterator(
     document_record_.document_id = raw_record.document_id;
     document_record_.nick_id = tokenizer_.vocabulary_.token_id(NICK, raw_record.nick);
     document_record_.date_id = tokenizer_.vocabulary_.token_id(DATE, raw_record.date);
+
+    auto begin = tokenizer_.word_entries_.begin();
+    document_record_.word_id = tokenizer_.vocabulary_.token_id(WORD, begin->first);
+    document_record_.entries = begin->second;
 }
     
 

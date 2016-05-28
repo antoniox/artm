@@ -66,3 +66,11 @@ const typename M::mapped_type & safe_get(const M & m, const T & t) {
     auto iterator = m.find(t);
     return iterator->second;
 }
+
+
+#define WRITE_BINARY(output, value) \
+    output.write(reinterpret_cast<const char *>(&value), sizeof(value))
+
+
+#define READ_BINARY(input, value) \
+    input.read(reinterpret_cast<char *>(&value), sizeof(value))

@@ -1,29 +1,22 @@
 #include "document_record.h"
+#include "utils.h"
 
 
-void DocumentRecord::load(std::istream & input) {
-    input >>
-        document_id >>
-        word_id >> nick_id >> date_id >>
-        entries;
+std::istream & DocumentRecord::load(std::istream & input) {
+    READ_BINARY(input, document_id);
+    READ_BINARY(input, word_id);
+    READ_BINARY(input, nick_id);
+    READ_BINARY(input, date_id);
+    READ_BINARY(input, entries);
+
+    return input;
 }
 
 
 void DocumentRecord::save(std::ostream & output) const {
-    output << 
-        document_id << DELIMITER <<
-        word_id << DELIMITER <<
-        nick_id << DELIMITER <<
-        date_id << DELIMITER <<
-        entries << std::endl;
-}
-
-
-void DocumentRecord::save_header(std::ostream & output) {
-    output << 
-        "document_id" << DELIMITER <<
-        "word_id" << DELIMITER <<
-        "nick_id" << DELIMITER <<
-        "date_id" << DELIMITER <<
-        "entries" << std::endl;
+    WRITE_BINARY(output, document_id);
+    WRITE_BINARY(output, word_id);
+    WRITE_BINARY(output, nick_id);
+    WRITE_BINARY(output, date_id);
+    WRITE_BINARY(output, entries);
 }
