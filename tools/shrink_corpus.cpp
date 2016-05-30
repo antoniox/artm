@@ -256,11 +256,11 @@ int main(int argc, const char ** argv) {
 
     auto thresholds = parse_thresholds(options);
 
-    std::ifstream input_vocabulary_stream(options["input-vocabulary"].as<std::string>(), std::ios::binary);
-    std::ofstream output_vocabulary_stream(options["output-vocabulary"].as<std::string>(), std::ios::binary);
+    std::ifstream input_vocabulary_stream(options["input-vocabulary"].as<std::string>());
+    std::ofstream output_vocabulary_stream(options["output-vocabulary"].as<std::string>());
 
-    std::ifstream input_corpus_stream(options["input-corpus"].as<std::string>(), std::ios::binary);
-    std::ofstream output_corpus_stream(options["output-corpus"].as<std::string>(), std::ios::binary);
+    std::ifstream input_corpus_stream(options["input-corpus"].as<std::string>());
+    std::ofstream output_corpus_stream(options["output-corpus"].as<std::string>());
 
     Frequencies frequencies;
     fill_frequencies(input_corpus_stream, frequencies);

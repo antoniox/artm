@@ -21,16 +21,18 @@ struct Phi {
 
     Phi(
         size_type topics_count, 
-        const Vocabulary & vocabulary,
+        const std::vector<size_type> & token_counts,
         float_type (*initializer)()
     );
 
-    void normalize();
+    void normalize_into(Phi & other) const;
     void fill(float_type (*initializer)());
+    void increment(const Phi & other);
+
     void save(std::ostream & output) const;
+    void load(std::istream & istream);
 
     // utility methods
     PhiTypeSlice & operator [] (const Type & type);
-    const PhiTypeSlice & operator [] (const Type &  type) const;
-    void swap(Phi & other);
+    const PhiTypeSlice & operator [] (const Type & type) const;
 };

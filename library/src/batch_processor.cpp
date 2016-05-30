@@ -9,11 +9,14 @@
 BatchProcessor::BatchProcessor(
     size_type topics_count,
     size_type inner_iterations,
-    const Vocabulary & vocabulary
+    const std::vector<size_type> & token_counts
 ) : topics_count_(topics_count),
     inner_iterations_(inner_iterations),
-    phi_(topics_count, vocabulary, &uniform_random),
+    phi_(topics_count, token_counts, &uniform_random),
+    phi_global_counters_(phi_),
     phi_counters_(phi_) {
+
+    phi_global_counters_.normalize_into(phi_);
 }
 
 
@@ -22,27 +25,33 @@ void BatchProcessor::calculate_expectation(
     const Theta & theta,
     Expectation & expectation
 ) const {
-    auto & type_phi = phi_[FIRST];
     size_type documents_count = documents.size();
 
-    PARALLEL_FOR(id_type, document_id, documents_count) {
-        auto & document = documents[document_id];
-        const auto & document_theta = theta[document_id];
-        auto & document_expectation = expectation[document_id];
+    expectation.fill(&zero);
 
-        FOR(id_type, topic_id, topics_count_) {
-            float_type value = document_theta[topic_id];
-            auto & phi_slice = type_phi[topic_id];
+    FOR(id_type, type_id, phi_.matrix.size()) {
+        Type type = static_cast<Type>(type_id);
+        const auto & type_phi = phi_[type];
 
-            for (const auto & edge_entry : document.edge_entries) {
-                auto & edge = edge_entry.edge;
-                auto & edge_expectation = document_expectation[edge];
+        PARALLEL_FOR(id_type, document_id, documents_count) {
+            auto & document = documents[document_id];
+            const auto & document_theta = theta[document_id];
+            auto & document_expectation = expectation[document_id];
 
-                for (const auto & token : edge.tokens) {
-                    value *= phi_slice[token.modality][token.id];
+            FOR(id_type, topic_id, topics_count_) {
+                float_type value = document_theta[topic_id];
+                const auto & phi_slice = type_phi[topic_id];
+
+                for (const auto & edge_entry : document.edge_entries) {
+                    auto & edge = edge_entry.edge;
+                    auto & edge_expectation = document_expectation[edge];
+
+                    for (const auto & token : edge.tokens) {
+                        value *= phi_slice[token.modality][token.id];
+                    }
+
+                    edge_expectation[topic_id] += value;
                 }
-
-                edge_expectation[topic_id] += value;
             }
         }
     }
@@ -77,8 +86,7 @@ void BatchProcessor::maximize_theta(
         }
     }
 
-    theta_counters.normalize();
-    theta.swap(theta_counters);
+    theta_counters.normalize_into(theta);
     theta_counters.fill(&zero);
 }
 
@@ -111,9 +119,10 @@ void BatchProcessor::maximize_phi(
         }
     }
 
-    phi_counters_.normalize();
-    phi_.swap(phi_counters_);
+    phi_global_counters_.increment(phi_counters_);
     phi_counters_.fill(&zero);
+
+    phi_global_counters_.normalize_into(phi_);
 }
 
 

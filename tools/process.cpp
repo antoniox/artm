@@ -27,25 +27,23 @@ int main(int argc, const char ** argv) {
     auto options = parse_options(&set_options, argc, argv);
     LOG_INFO << options;
 
-    std::ifstream vocabulary_stream(options["vocabulary"].as<std::string>(), std::ios::binary);
+    std::ifstream vocabulary_stream(options["vocabulary"].as<std::string>());
 
     Vocabulary vocabulary;
     vocabulary.load(vocabulary_stream);
 
     size_type topics_count = options["topics_count"].as<size_type>();
-
     size_type inner_iterations = options["inner_iterations"].as<size_type>();
 
-    std::ifstream corpus_stream(options["corpus"].as<std::string>(), std::ios::binary);
+    std::ifstream corpus_stream(options["corpus"].as<std::string>());
 
     size_type batch_size = options["batch_size"].as<size_type>();
     BatchParser parser(corpus_stream, batch_size);
 
     Batch chunk;
-
-    BatchProcessor processor(topics_count, inner_iterations, vocabulary);
-
-    size_type doc_id = 0;
+    BatchProcessor processor(
+        topics_count, inner_iterations, vocabulary.modality_sizes()
+    );
 
     while (parser.has_more()) {
         parser.parse(chunk);

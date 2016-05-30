@@ -17,11 +17,10 @@ struct Theta {
         float_type (*initializer)()
     );
 
-    void normalize();
+    void normalize_into(Theta & other) const;
     void fill(float_type (*initializer)());
 
     // utility methods
     std::vector<float_type> & operator [] (id_type document_id);
     const std::vector<float_type> & operator [] (id_type document_id) const;
-    void swap(Theta & other);
 };

@@ -25,8 +25,8 @@ int main(int argc, const char ** argv) {
     LOG_INFO << options;
 
     std::ifstream raw_corpus_stream(options["raw-corpus"].as<std::string>());
-    std::ofstream corpus_stream(options["corpus"].as<std::string>(), std::ios::binary);
-    std::ofstream vocabulary_stream(options["vocabulary"].as<std::string>(), std::ios::binary);
+    std::ofstream corpus_stream(options["corpus"].as<std::string>());
+    std::ofstream vocabulary_stream(options["vocabulary"].as<std::string>());
 
     RawRecord raw_record;
     Vocabulary vocabulary;
@@ -38,7 +38,9 @@ int main(int argc, const char ** argv) {
         auto tokenizer = raw_record.tokenize(vocabulary);
 
         for (auto & document_record : tokenizer) {
-            document_record.save(corpus_stream);
+            if (document_record.is_valid_) {
+                document_record.save(corpus_stream);
+            }
         }
 
         LOG_INFO_EVERY_N(10000, "documents");

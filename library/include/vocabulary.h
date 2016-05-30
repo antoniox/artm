@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "types.h"
 
@@ -16,8 +17,10 @@ public:
     id_type token_id(const Modality & modality, const std::string & token);
     id_type token_id(const Modality & modality, const std::string & token) const;
     const std::string & token(const Modality & modality, id_type token_id) const;
+    const std::string & token(const Token & token) const;
 
     size_type modality_size(const Modality & modality) const;
+    std::vector<size_type> modality_sizes() const;
 
 private:
     std::array<

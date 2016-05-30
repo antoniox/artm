@@ -19,3 +19,9 @@ bool Edge::operator == (const Edge & other) const {
 EdgeEntry::EdgeEntry(Edge && edge_, size_type entries_)
     : edge(std::move(edge_)), entries(entries_) {
 }
+
+
+bool TokenProbability::operator < (const TokenProbability & other) const {
+    // for correct order of comparison for pq
+    return value > other.value;
+}

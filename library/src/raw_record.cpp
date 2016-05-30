@@ -110,13 +110,22 @@ DocumentRecordIterator::DocumentRecordIterator(
 
     auto & raw_record = tokenizer_.raw_record_;
 
+    document_record_.is_valid_ = false;
     document_record_.document_id = raw_record.document_id;
     document_record_.nick_id = tokenizer_.vocabulary_.token_id(NICK, raw_record.nick);
     document_record_.date_id = tokenizer_.vocabulary_.token_id(DATE, raw_record.date);
 
-    auto begin = tokenizer_.word_entries_.begin();
-    document_record_.word_id = tokenizer_.vocabulary_.token_id(WORD, begin->first);
-    document_record_.entries = begin->second;
+    if (
+        word_iterator_ != tokenizer_.word_entries_.end() &&
+        is_good_word(word_iterator_->first)
+    ) {
+        auto & word = word_iterator_->first;
+        auto & entries = word_iterator_->second;
+
+        document_record_.is_valid_ = true;
+        document_record_.word_id = tokenizer_.vocabulary_.token_id(WORD, word);
+        document_record_.entries = entries;
+    }
 }
     
 
@@ -136,6 +145,7 @@ void DocumentRecordIterator::increment() {
         auto & word = word_iterator_->first;
         auto & entries = word_iterator_->second;
 
+        document_record_.is_valid_ = true;
         document_record_.word_id = tokenizer_.vocabulary_.token_id(WORD, word);
         document_record_.entries = entries;
     }

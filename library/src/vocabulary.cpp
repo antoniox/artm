@@ -10,6 +10,7 @@ void Vocabulary::load(std::istream & input) {
 
     while (record.load(input)) {
         token_id_map_[record.modality][record.token] = record.token_id;
+        id_token_map_[record.modality][record.token_id] = record.token;
     }
 }
 
@@ -68,6 +69,16 @@ const std::string & Vocabulary::token(const Modality & modality, id_type token_i
 }
 
 
+const std::string & Vocabulary::token(const Token & token) const {
+    return this->token(token.modality, token.id);
+}
+
+
 size_type Vocabulary::modality_size(const Modality & modality) const {
     return token_id_map_[modality].size();
+}
+
+
+std::vector<size_type> Vocabulary::modality_sizes() const {
+    return {modality_size(WORD), modality_size(NICK), modality_size(DATE)};
 }

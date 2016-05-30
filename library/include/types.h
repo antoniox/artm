@@ -59,3 +59,11 @@ struct EdgeEntry {
 
     EdgeEntry(Edge && edge_, size_type entries_);
 };
+
+
+struct TokenProbability {
+    Token token;
+    float_type value;
+
+    bool operator < (const TokenProbability & other) const;
+};

@@ -5,14 +5,12 @@
 #include "types.h"
 
 
-struct DocumentRecord {
-    id_type document_id;
-    id_type word_id;
-    id_type nick_id;
-    id_type date_id;
-    size_type entries;
-
-    bool is_valid_;
+struct PhiRecord {
+    Type type;
+    id_type topic_id;
+    Modality modality;
+    id_type token_id;
+    float_type value;
 
     std::istream & load(std::istream & input);
     void save(std::ostream & output) const;

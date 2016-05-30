@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fstream>
+#include <vector>
 
 #include "batch.h"
 #include "expectation.h"
@@ -15,7 +16,7 @@ public:
     BatchProcessor(
         size_type topics_count,
         size_type inner_iterations,
-        const Vocabulary & vocabulary
+        const std::vector<size_type> & token_counts
     );
 
     void process(const Batch & batch);
@@ -26,6 +27,7 @@ private:
     size_type inner_iterations_;
 
     Phi phi_;
+    Phi phi_global_counters_;
     Phi phi_counters_;
 
     void calculate_expectation(

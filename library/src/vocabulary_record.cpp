@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "vocabulary_record.h"
 #include "utils.h"
 
@@ -36,4 +38,12 @@ void VocabularyRecord::save(std::ostream & output) const {
     output.write(token.c_str(), size);
 
     WRITE_BINARY(output, token_id);
+}
+
+
+void VocabularyRecord::save_string(std::ostream & output) const {
+    output <<
+        modality << '\t' <<
+        token << '\t' <<
+        token_id << std::endl;
 }

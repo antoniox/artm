@@ -22,17 +22,22 @@ Theta::Theta(
 }
 
 
-void Theta::normalize() {
-    for (auto & document_slice : matrix) {
+void Theta::normalize_into(Theta & other) const {
+    PARALLEL_FOR(id_type, document_id, matrix.size()) {
+        const auto & document_slice = matrix[document_id];
+        auto & other_document_slice = other[document_id];
+
         float_type divisor = 0;
 
-        for (auto & value : document_slice) {
+        for (const auto & value : document_slice) {
             divisor += value;
         }
 
-        if (divisor > 0) {
-            for (auto & value : document_slice) {
-                value /= divisor;
+        FOR(id_type, topic_id, document_slice.size()) {
+            if (divisor == 0) {
+                other_document_slice[topic_id] = 0;
+            } else {
+                other_document_slice[topic_id] = document_slice[topic_id] / divisor;
             }
         }
     }
@@ -55,9 +60,4 @@ std::vector<float_type> & Theta::operator [] (id_type document_id) {
 
 const std::vector<float_type> & Theta::operator [] (id_type document_id) const {
     return matrix[document_id];
-}
-
-
-void Theta::swap(Theta & other) {
-    matrix.swap(other.matrix);
 }
