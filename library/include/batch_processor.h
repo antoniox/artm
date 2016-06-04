@@ -27,7 +27,6 @@ private:
     size_type inner_iterations_;
 
     Phi phi_;
-    Phi phi_global_counters_;
     Phi phi_counters_;
 
     void calculate_expectation(

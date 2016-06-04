@@ -27,7 +27,6 @@ struct Phi {
 
     void normalize_into(Phi & other) const;
     void fill(float_type (*initializer)());
-    void increment(const Phi & other);
 
     void save(std::ostream & output) const;
     void load(std::istream & istream);

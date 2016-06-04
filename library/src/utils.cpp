@@ -1,9 +1,9 @@
-#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <random>
 #include <string>
 
+#include <fcntl.h>
 #include <unistd.h>
 
 #include "types.h"
@@ -23,6 +23,9 @@ po::variables_map parse_options(
     po::options_description description;
 
     description.add_options()
+        ("log-directory",
+            po::value<std::string>()->default_value("logs"),
+            "log directory path")
         ("help", "produce help message");
 
     (*set_options)(description);
@@ -79,10 +82,28 @@ std::ostream & operator << (
 }
 
 
-void init_logging(const char * program_name) {
-    dup2(STDOUT_FILENO, STDERR_FILENO);
+void init_logging(const char * program_name, const po::variables_map & options) {
+    auto log_directory = options["log-directory"].as<std::string>();
+
+    std::string log_filename(
+        program_name + 2, program_name + strlen(program_name)
+    );
+
+    log_filename = log_directory + "/" + log_filename;
+
+    if (options.count("suffix")) {
+        auto suffix = options["suffix"].as<std::string>();
+        log_filename += suffix;
+    }
+
+    log_filename += ".log";
+
+    int log_fd = open(log_filename.c_str(), O_WRONLY | O_CREAT, 0644);
+
+    dup2(log_fd, STDERR_FILENO);
     FLAGS_logtostderr = 1;
-    google::InitGoogleLogging(program_name);
+
+    google::InitGoogleLogging(program_name + 2);
 }
 
 

@@ -68,10 +68,11 @@ void set_options(po::options_description & description) {
         ("config",
             po::value<std::string>()->default_value("shrink_corpus.cfg"),
             "config filename")
-        ("input-vocabulary", po::value<std::string>(), "input vocabulary filename")
-        ("output-vocabulary", po::value<std::string>(), "output vocabulary filename")
-        ("input-corpus", po::value<std::string>(), "input corpus filename")
-        ("output-corpus", po::value<std::string>(), "output corpus filename");
+        ("corpus-directory", po::value<std::string>(), "corpus directory path")
+        ("vocabulary-directory", po::value<std::string>(), "vocabulary directory path")
+        ("corpus", po::value<std::string>(), "processed corpus filename")
+        ("vocabulary", po::value<std::string>(), "vocabulary filename")
+        ("suffix", po::value<std::string>(), "suffix of output data");
 
     add_threshold_options("word", description);
     add_threshold_options("nick", description);
@@ -248,19 +249,33 @@ void remap_corpus(
 
 
 int main(int argc, const char ** argv) {
-    init_logging(argv[0]);
-    LOG_INFO << "Running " << argv[0] << "..." <<  std::endl;
-
     auto options = parse_options(&set_options, argc, argv);
+
+    init_logging(argv[0], options);
+    LOG_INFO << "Running " << argv[0] << "..." <<  std::endl;
     LOG_INFO << options;
 
     auto thresholds = parse_thresholds(options);
 
-    std::ifstream input_vocabulary_stream(options["input-vocabulary"].as<std::string>());
-    std::ofstream output_vocabulary_stream(options["output-vocabulary"].as<std::string>());
+    auto corpus_directory = options["corpus-directory"].as<std::string>();
 
-    std::ifstream input_corpus_stream(options["input-corpus"].as<std::string>());
-    std::ofstream output_corpus_stream(options["output-corpus"].as<std::string>());
+    auto corpus_filename = options["corpus"].as<std::string>();
+    corpus_filename = corpus_directory + "/" + corpus_filename;
+
+    auto vocabulary_directory = options["vocabulary-directory"].as<std::string>();
+    auto vocabulary_filename = options["vocabulary"].as<std::string>();
+    vocabulary_filename = vocabulary_directory + "/" + vocabulary_filename;
+
+    auto suffix = options["suffix"].as<std::string>();
+
+    auto output_corpus_filename = corpus_filename + suffix;
+    auto output_vocabulary_filename = vocabulary_filename + suffix;
+
+    std::ifstream input_vocabulary_stream(vocabulary_filename);
+    std::ofstream output_vocabulary_stream(output_vocabulary_filename);
+
+    std::ifstream input_corpus_stream(corpus_filename);
+    std::ofstream output_corpus_stream(output_corpus_filename);
 
     Frequencies frequencies;
     fill_frequencies(input_corpus_stream, frequencies);

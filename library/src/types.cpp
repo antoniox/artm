@@ -8,11 +8,13 @@ Token::Token(const Modality & modality_, id_type id_)
 
 Edge::Edge(std::vector<Token> && tokens_, const Type & type_, id_type id_)
     : tokens(std::move(tokens_)), type(type_), id(id_) {
+
+    hash_ = (id << 4) | type;
 }
 
 
 bool Edge::operator == (const Edge & other) const {
-    return id == other.id && type == other.type;
+    return hash_ ==  other.hash_;
 }
 
 

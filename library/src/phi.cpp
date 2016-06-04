@@ -60,11 +60,8 @@ void Phi::normalize_into(Phi & other) const {
                 }
 
                 FOR(id_type, token_id, modality_slice.size()) {
-                    if (divisor == 0) {
-                        other_modality_slice[token_id] = 0;
-                    } else {
-                        other_modality_slice[token_id] = modality_slice[token_id] / divisor;
-                    }
+                    auto & value = other_modality_slice[token_id];
+                    value = divisor == 0 ? 0 : modality_slice[token_id] / divisor;
                 }
             }
         }
@@ -79,28 +76,6 @@ void Phi::fill(float_type (*initializer)()) {
             for (auto & modality_slice : topic_slice) {
                 for (auto & value : modality_slice) {
                     value = (*initializer)();
-                }
-            }
-        }
-    }
-}
-
-
-void Phi::increment(const Phi & other) {
-    FOR(id_type, type_id, matrix.size()) {
-        auto & type_slice = matrix[type_id];
-        const auto & other_type_slice = other.matrix[type_id];
-
-        PARALLEL_FOR(id_type, topic_id, type_slice.size()) {
-            auto & topic_slice = type_slice[topic_id];
-            const auto & other_topic_slice = other_type_slice[topic_id];
-
-            FOR(id_type, modality_id, topic_slice.size()) {
-                auto & modality_slice = topic_slice[modality_id];
-                const auto & other_modality_slice = other_topic_slice[modality_id];
-
-                FOR(id_type, token_id, modality_slice.size()) {
-                    modality_slice[token_id] += other_modality_slice[token_id];
                 }
             }
         }

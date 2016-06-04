@@ -13,10 +13,9 @@ BatchProcessor::BatchProcessor(
 ) : topics_count_(topics_count),
     inner_iterations_(inner_iterations),
     phi_(topics_count, token_counts, &uniform_random),
-    phi_global_counters_(phi_),
     phi_counters_(phi_) {
 
-    phi_global_counters_.normalize_into(phi_);
+    phi_counters_.normalize_into(phi_);
 }
 
 
@@ -67,6 +66,7 @@ void BatchProcessor::maximize_theta(
     Theta & theta_counters
 ) const {
     size_type documents_count = documents.size();
+    theta_counters.fill(&zero);
 
     PARALLEL_FOR(id_type, document_id, documents_count) {
         auto & document = documents[document_id];
@@ -77,7 +77,7 @@ void BatchProcessor::maximize_theta(
             auto & edge = edge_entry.edge;
             auto & entries = edge_entry.entries;
 
-            auto & edge_expectation = safe_get(document_expectation, edge);
+            auto & edge_expectation = document_expectation.find(edge)->second;
 
             FOR(id_type, topic_id, topics_count_) {
                 document_theta_counters[topic_id] +=
@@ -87,7 +87,6 @@ void BatchProcessor::maximize_theta(
     }
 
     theta_counters.normalize_into(theta);
-    theta_counters.fill(&zero);
 }
 
 
@@ -109,7 +108,7 @@ void BatchProcessor::maximize_phi(
                 auto & edge = edge_entry.edge;
                 auto & entries = edge_entry.entries;
 
-                auto & edge_expectation = safe_get(document_expectation, edge);
+                auto & edge_expectation = document_expectation.find(edge)->second;
                 float_type value = entries * edge_expectation[topic_id];
 
                 for (const auto & token : edge.tokens) {
@@ -119,10 +118,7 @@ void BatchProcessor::maximize_phi(
         }
     }
 
-    phi_global_counters_.increment(phi_counters_);
-    phi_counters_.fill(&zero);
-
-    phi_global_counters_.normalize_into(phi_);
+    phi_counters_.normalize_into(phi_);
 }
 
 
@@ -133,8 +129,7 @@ void BatchProcessor::process(const Batch & batch) {
     Theta theta(documents_count, topics_count_, &uniform_random);
 
     Theta theta_counters = theta;
-    theta_counters.fill(&zero);
-
+    
     Expectation expectation(documents, topics_count_, &zero);
 
     FOR(id_type, iteration, inner_iterations_) {

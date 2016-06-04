@@ -9,9 +9,9 @@ Expectation::Expectation(
 ) {
     size_type documents_count = documents.size();
 
-    matrix.reserve(documents_count);
+    matrix.resize(documents_count);
 
-    FOR(id_type, document_id, documents_count) {
+    PARALLEL_FOR(id_type, document_id, documents_count) {
         auto & document = documents[document_id]; 
 
         EdgeMapping edge_mapping;
@@ -27,7 +27,7 @@ Expectation::Expectation(
             }
         }
 
-        matrix.push_back(std::move(edge_mapping));
+        matrix[document_id] = std::move(edge_mapping);
     }
 }
 

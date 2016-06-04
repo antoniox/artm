@@ -22,7 +22,7 @@ std::ostream & operator << (
     const po::variables_map & options
 );
 
-void init_logging(const char * program_name);
+void init_logging(const char * program_name, const po::variables_map & options);
 float_type uniform_random();
 float_type zero();
 
@@ -60,12 +60,7 @@ float_type zero();
     _Pragma("omp parallel for") \
     FOR(type, name, limit)
 
-
-template <typename M, typename T>
-const typename M::mapped_type & safe_get(const M & m, const T & t) {
-    auto iterator = m.find(t);
-    return iterator->second;
-}
+//_Pragma("omp parallel for") \
 
 
 #define WRITE_BINARY(output, value) \

@@ -3,8 +3,6 @@
 #include <functional>
 #include <vector>
 
-#include <boost/functional/hash.hpp>
-
 
 typedef unsigned int size_type;
 typedef unsigned int id_type;
@@ -34,6 +32,9 @@ struct Edge {
     Type type;
     id_type id;
 
+    // precompute hash upon creation
+    size_t hash_;
+
     Edge(std::vector<Token> && tokens_, const Type & type_, id_type id_);
     bool operator == (const Edge & other) const;
 };
@@ -42,12 +43,7 @@ struct Edge {
 namespace std {
     template <> struct hash<Edge> {
         size_t operator ()(const Edge & edge) const {
-            size_t seed = 0;
-
-            boost::hash_combine(seed, edge.type);
-            boost::hash_combine(seed, edge.id);
-
-            return seed;
+            return edge.hash_;
         }
     };
 }
