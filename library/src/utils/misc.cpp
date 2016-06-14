@@ -1,13 +1,10 @@
 #include <iostream>
 #include <fstream>
 #include <random>
+
 #include <string>
 
-#include <fcntl.h>
-#include <unistd.h>
-
-#include "types.h"
-#include "utils.h"
+#include "utils/misc.h"
 
 
 void skip_line(std::istream & input) {
@@ -21,13 +18,6 @@ po::variables_map parse_options(
     int argc, const char ** argv
 ) {
     po::options_description description;
-
-    description.add_options()
-        ("log-directory",
-            po::value<std::string>()->default_value("logs"),
-            "log directory path")
-        ("help", "produce help message");
-
     (*set_options)(description);
 
     po::variables_map options;
@@ -82,31 +72,6 @@ std::ostream & operator << (
 }
 
 
-void init_logging(const char * program_name, const po::variables_map & options) {
-    auto log_directory = options["log-directory"].as<std::string>();
-
-    std::string log_filename(
-        program_name + 2, program_name + strlen(program_name)
-    );
-
-    log_filename = log_directory + "/" + log_filename;
-
-    if (options.count("suffix")) {
-        auto suffix = options["suffix"].as<std::string>();
-        log_filename += suffix;
-    }
-
-    log_filename += ".log";
-
-    int log_fd = open(log_filename.c_str(), O_WRONLY | O_CREAT, 0644);
-
-    dup2(log_fd, STDERR_FILENO);
-    FLAGS_logtostderr = 1;
-
-    google::InitGoogleLogging(program_name + 2);
-}
-
-
 float_type uniform_random() {
     static std::random_device random_device;
     static std::mt19937 random_generator(random_device());
@@ -118,4 +83,35 @@ float_type uniform_random() {
 
 float_type zero() {
     return 0;
+}
+
+
+template <typename T>
+void write_binary(std::ostream & output, const T & value) {
+    output.write(reinterpret_cast<const char *>(&value), sizeof(T));
+}
+
+
+template <>
+void write_binary(std::ostream & output, const std::string & value) {
+    size_type size = value.length() + 1;
+    write_binary(output, size);
+    output.write(value.c_str(), size);
+}
+
+
+template <typename T>
+void read_binary(std::istream & input, T & value) {
+    input.read(reinterpret_cast<char *>(&value), sizeof(T));
+}
+
+template <>
+void read_binary(std::istream & input, std::string & value) {
+    size_type size;
+    read_binary(input, size);
+
+    char * tmp = new char [size];
+    input.read(tmp, size);
+    value = tmp;
+    delete [] tmp;
 }

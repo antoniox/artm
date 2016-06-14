@@ -1,6 +1,6 @@
 include_directories(${ARTM_INCLUDE_DIRS})
 
-FILE(GLOB CPP_FILES *.cpp)
+FILE(GLOB_RECURSE CPP_FILES *.cpp)
 
 add_library(artm STATIC
     ${CPP_FILES}

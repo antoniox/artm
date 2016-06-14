@@ -3,7 +3,7 @@
 #include <vector>
 #include <unordered_map>
 
-#include "document.h"
+#include "batch.h"
 #include "types.h"
 
 
@@ -17,7 +17,7 @@ struct Expectation {
     std::vector<EdgeMapping> matrix;
 
     Expectation(
-        const std::vector<Document> & documents,
+        const Batch & batch,
         size_type topics_count,
         float_type (*initializer)()
     );
@@ -26,6 +26,11 @@ struct Expectation {
     void fill(float_type (*initializer)());
 
     // utility methods
-    EdgeMapping & operator [] (id_type document_id);
-    const EdgeMapping & operator [] (id_type document_id) const;
+    EdgeMapping & operator [] (id_type document_id) {
+        return matrix[document_id];
+    }
+
+    const EdgeMapping & operator [] (id_type document_id) const {
+        return matrix[document_id];
+    }
 };

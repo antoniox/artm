@@ -1,0 +1,129 @@
+#include "batch_processor.h"
+#include "perplexity.h"
+#include "utils.h"
+
+
+void BatchProcessor::calculate_expectation(
+    Expectation & expectation,
+    const Batch & batch,
+    const Phi & phi,
+    const Theta & theta
+) {
+    for (auto & type_phi : phi.matrix) {
+        PARALLEL_FOR(id_type, topic_id, phi.topics_count_) {
+            auto & topic_phi = type_phi[topic_id];
+
+            FOR(id_type, document_id, batch.size()) {
+                auto & document = batch.documents[document_id];
+                auto & document_theta = theta[document_id];
+                auto & document_expectation = expectation[document_id];
+
+                float_type theta_value = document_theta[topic_id];
+
+                for (auto & edge_entry : document.edge_entries) {
+                    auto & edge = edge_entry.edge;
+                    auto & edge_expectation = document_expectation[edge];
+
+                    float_type phi_value = 1;
+
+                    for (auto & token : edge.tokens) {
+                        phi_value *= topic_phi[token.modality][token.id];
+                    }
+
+                    edge_expectation[topic_id] += phi_value * theta_value;
+                }
+            }
+        }
+    }
+
+    expectation.normalize();
+}
+
+
+void BatchProcessor::maximize_theta(
+    Theta & theta,
+    const Batch & batch,
+    const Expectation & expectation
+) {
+    Theta theta_counters = theta;
+    theta_counters.fill(&zero);
+
+    PARALLEL_FOR(id_type, document_id, batch.size()) {
+        auto & document = batch.documents[document_id];
+        auto & document_expectation = expectation[document_id];
+        auto & document_theta_counters = theta_counters[document_id];
+
+        auto topics_count = document_theta_counters.size();
+
+        for (auto & edge_entry : document.edge_entries) {
+            auto & edge = edge_entry.edge;
+            auto & entries = edge_entry.entries;
+
+            auto & edge_expectation = document_expectation.find(edge)->second;
+
+            FOR(id_type, topic_id, topics_count) {
+                document_theta_counters[topic_id] +=
+                    entries * edge_expectation[topic_id];
+            }
+        }
+    }
+
+    theta_counters.normalize_into(theta);
+}
+
+
+void BatchProcessor::maximize_phi(
+    Phi & phi,
+    Phi & phi_counters,
+    const Batch & batch,
+    const Expectation & expectation
+) {
+    for (auto & type_phi_counters : phi_counters.matrix) {
+        PARALLEL_FOR(id_type, topic_id, phi.topics_count_) {
+            auto & topic_phi_counters = type_phi_counters[topic_id];
+
+            FOR(id_type, document_id, batch.size()) {
+                auto & document = batch.documents[document_id];
+                auto & document_expectation = expectation[document_id];
+
+                for (auto & edge_entry : document.edge_entries) {
+                    auto & edge = edge_entry.edge;
+                    auto & entries = edge_entry.entries;
+
+                    auto & edge_expectation = document_expectation.find(edge)->second;
+
+                    float_type value = entries * edge_expectation[topic_id];
+
+                    for (auto & token : edge.tokens) {
+                        topic_phi_counters[token.modality][token.id] += value;
+                    }
+                }
+            }
+        }
+    }
+
+    phi_counters.normalize_into(phi);
+}
+
+
+void BatchProcessor::process(
+    const Batch & batch,
+    Phi & phi,
+    Phi & phi_counters,
+    size_type inner_iterations
+) {
+    Theta theta(batch.size(), phi.topics_count_, &uniform_random);
+    Expectation expectation(batch, phi.topics_count_, &zero);
+
+    FOR(id_type, iteration, inner_iterations) {
+        expectation.fill(&zero);
+        calculate_expectation(expectation, batch, phi, theta);
+        maximize_theta(theta, batch, expectation);
+    }
+
+    maximize_phi(phi, phi_counters, batch, expectation);
+
+    CUSTOM_LOG_EVERY_N(INFO, 10) <<
+        "Processed " << google::COUNTER << " chunks; perplexity is " <<
+        Perplexity::score_batch(batch, phi, theta) << std::endl;
+}

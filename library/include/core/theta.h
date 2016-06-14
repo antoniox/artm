@@ -11,6 +11,8 @@ struct Theta {
         std::vector<float_type>
     > matrix;
 
+    Theta() {}
+
     Theta(
         size_type documents_count,
         size_type topics_count,

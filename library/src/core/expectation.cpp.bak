@@ -3,16 +3,14 @@
 
 
 Expectation::Expectation(
-    const std::vector<Document> & documents,
+    const Batch & batch,
     size_type topics_count,
     float_type (*initializer)()
 ) {
-    size_type documents_count = documents.size();
+    matrix.resize(batch.size());
 
-    matrix.resize(documents_count);
-
-    PARALLEL_FOR(id_type, document_id, documents_count) {
-        auto & document = documents[document_id]; 
+    PARALLEL_FOR(id_type, document_id, batch.size()) {
+        auto & document = batch.documents[document_id]; 
 
         EdgeMapping edge_mapping;
 
@@ -33,7 +31,9 @@ Expectation::Expectation(
 
 
 void Expectation::normalize() {
-    for (auto & document_slice : matrix) {
+    PARALLEL_FOR(id_type, document_id, matrix.size()) {
+        auto & document_slice = matrix[document_id];
+
         for (auto & pair : document_slice) {
             auto & edge_slice = pair.second;
 
@@ -54,7 +54,8 @@ void Expectation::normalize() {
 
 
 void Expectation::fill(float_type (*initializer)()) {
-    for (auto & document_slice : matrix) {
+    PARALLEL_FOR(id_type, document_id, matrix.size()) {
+        auto & document_slice = matrix[document_id];
         for (auto & pair : document_slice) {
             auto & edge_slice = pair.second;
 
@@ -63,14 +64,4 @@ void Expectation::fill(float_type (*initializer)()) {
             }
         }
     }
-}
-
-
-Expectation::EdgeMapping & Expectation::operator [] (id_type document_id) {
-    return matrix[document_id];
-}
-
-
-const Expectation::EdgeMapping & Expectation::operator [] (id_type document_id) const {
-    return matrix[document_id];
 }

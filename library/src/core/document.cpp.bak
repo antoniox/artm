@@ -1,0 +1,11 @@
+#include "document.h"
+
+
+std::vector<EdgeEntry>::const_iterator Document::begin() const {
+    return edge_entries_.begin();
+}
+
+
+std::vector<EdgeEntry>::const_iterator Document::end() const {
+    return edge_entries_.end();
+}

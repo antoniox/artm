@@ -1,0 +1,71 @@
+#include <cmath>
+#include <iostream>
+
+#include "batch_processor.h"
+#include "perplexity.h"
+#include "utils.h"
+
+
+float_type Perplexity::score_batch(
+    const Batch & batch, const Phi & phi, const Theta & theta
+) {
+    float_type likelihood = 0;
+    size_type edges_count = 0;
+
+    auto & documents = batch.documents;
+
+    for (auto & type_phi : phi.matrix) {
+        PARALLEL_FOR(id_type, document_id, documents.size()) {
+            auto & document = documents[document_id];
+            auto & document_theta = theta[document_id];
+
+            float_type document_likelihood = 0;
+
+            for (auto & edge_entry : document.edge_entries) {
+                auto & edge = edge_entry.edge;
+                auto & entries = edge_entry.entries;
+
+                float_type edge_probability = 0;
+
+                FOR(id_type, topic_id, phi.topics_count_) {
+                    float_type phi_value = 1;
+
+                    auto & topic_phi = type_phi[topic_id];
+
+                    for (auto & token : edge.tokens) {
+                        phi_value *= topic_phi[token.modality][token.id];
+                    }
+
+                    edge_probability += document_theta[topic_id] * phi_value;
+                }
+
+                document_likelihood += entries * std::log(edge_probability);
+
+                #pragma omp atomic
+                edges_count += entries;
+            }
+
+            #pragma omp atomic
+            likelihood += document_likelihood;
+        }
+    }
+
+    return std::exp(-likelihood / edges_count);
+}
+
+
+float_type Perplexity::score_batch(
+    const Batch & batch, const Phi & phi,
+    size_type inner_iterations
+) {
+    Theta theta(batch.size(), phi.topics_count_, &uniform_random);
+    Expectation expectation(batch, phi.topics_count_, &zero);
+
+    FOR(id_type, iteration, inner_iterations) {
+        expectation.fill(&zero);
+        BatchProcessor::calculate_expectation(expectation, batch, phi, theta);
+        BatchProcessor::maximize_theta(theta, batch, expectation);
+    }
+
+    return score_batch(batch, phi, theta);
+}

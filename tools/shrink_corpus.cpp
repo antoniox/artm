@@ -68,8 +68,6 @@ void set_options(po::options_description & description) {
         ("config",
             po::value<std::string>()->default_value("shrink_corpus.cfg"),
             "config filename")
-        ("corpus-directory", po::value<std::string>(), "corpus directory path")
-        ("vocabulary-directory", po::value<std::string>(), "vocabulary directory path")
         ("corpus", po::value<std::string>(), "processed corpus filename")
         ("vocabulary", po::value<std::string>(), "vocabulary filename")
         ("suffix", po::value<std::string>(), "suffix of output data");
@@ -90,10 +88,10 @@ Thresholds parse_thresholds(const po::variables_map & options) {
             options["min-nick-threshold"].as<size_type>(),
             options["max-nick-threshold"].as<size_type>(),
         },
-        Threshold {
-            options["min-date-threshold"].as<size_type>(),
-            options["max-date-threshold"].as<size_type>(),
-        }
+        // Threshold {
+        //     options["min-date-threshold"].as<size_type>(),
+        //     options["max-date-threshold"].as<size_type>(),
+        // }
     };
 }
 
@@ -135,7 +133,7 @@ void fill_remapping_vocabulary(
 ) {
     LOG_INFO << "Filling remapping vocabulary..." << std::endl;
 
-    std::array<id_type, MODALITY_COUNT> candidate_ids({0, 0, 0});
+    std::array<id_type, MODALITY_COUNT> candidate_ids({0, 0});// , 0});
 
     FOR(id_type, modality_id, MODALITY_COUNT) {
         Modality modality = static_cast<Modality>(modality_id);
@@ -257,15 +255,8 @@ int main(int argc, const char ** argv) {
 
     auto thresholds = parse_thresholds(options);
 
-    auto corpus_directory = options["corpus-directory"].as<std::string>();
-
     auto corpus_filename = options["corpus"].as<std::string>();
-    corpus_filename = corpus_directory + "/" + corpus_filename;
-
-    auto vocabulary_directory = options["vocabulary-directory"].as<std::string>();
     auto vocabulary_filename = options["vocabulary"].as<std::string>();
-    vocabulary_filename = vocabulary_directory + "/" + vocabulary_filename;
-
     auto suffix = options["suffix"].as<std::string>();
 
     auto output_corpus_filename = corpus_filename + suffix;

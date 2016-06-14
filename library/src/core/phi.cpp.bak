@@ -5,7 +5,7 @@
 #include "utils.h"
 
 
-Phi::Phi(
+void Phi::create(
     size_type topics_count, 
     const std::vector<size_type> & token_counts,
     float_type (*initializer)()
@@ -84,6 +84,15 @@ void Phi::fill(float_type (*initializer)()) {
 
 
 void Phi::save(std::ostream & output) const {
+    WRITE_BINARY(output, topics_count_);
+
+    size_t tmp = MODALITY_COUNT;
+    WRITE_BINARY(output, tmp);
+
+    FOR(id_type, modality_id, MODALITY_COUNT) {
+        WRITE_BINARY(output, token_counts_[modality_id]);
+    }
+
     PhiRecord record;
 
     FOR(id_type, type_id, matrix.size()) {
@@ -114,6 +123,24 @@ void Phi::save(std::ostream & output) const {
 
 
 void Phi::load(std::istream & input) {
+    READ_BINARY(input, topics_count_);
+
+    LOG_INFO << topics_count_ << " ";
+
+    size_t modality_count;
+    READ_BINARY(input, modality_count);
+
+    LOG_INFO << modality_count << " ";
+
+    token_counts_.resize(modality_count);
+
+    FOR(id_type, modality_id, modality_count) {
+        READ_BINARY(input, token_counts_[modality_id]);
+        LOG_INFO << token_counts_[modality_id] << " ";
+    }
+
+    create(topics_count_, token_counts_, &zero);
+
     PhiRecord record;
 
     while (record.load(input)) {
@@ -123,11 +150,11 @@ void Phi::load(std::istream & input) {
 }
 
 
-Phi::PhiTypeSlice & Phi::operator [] (const Type & type) {
+const Phi::PhiTypeSlice & Phi::operator [] (const Type & type) const {
     return matrix[type];
 }
 
 
-const Phi::PhiTypeSlice & Phi::operator [] (const Type & type) const {
+Phi::PhiTypeSlice & Phi::operator [] (const Type & type) {
     return matrix[type];
 }
